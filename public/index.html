@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Form</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+</head>
+<body class="container-fluid p-3">
+  <form onsubmit="return handleCreate(event)" class="d-flex align-items-center p-2">
+    <input class="form-control" id="taskTitle" aria-describedby="emailHelp" placeholder="Task Name">
+    <button type="submit" class="ml-3 btn btn-primary">Submit</button>
+  </form>
+
+  <h1 class="p-2">My Tasks</h1>
+  <div id="tasks" class="p-2 row m-0"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/7.22.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.22.0/firebase-firestore.js"></script>
+  <script>
+    // variables
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+	const firebaseConfig = {
+	  apiKey: "AIzaSyDOR53gRsCW30xLiqazUZGp8Mm2euQF8go",
+	  authDomain: "monviso-8d767.firebaseapp.com",
+	  databaseURL: "https://monviso-8d767-default-rtdb.europe-west1.firebasedatabase.app",
+	  projectId: "monviso-8d767",
+	  storageBucket: "monviso-8d767.appspot.com",
+	  messagingSenderId: "859501920236",
+	  appId: "1:859501920236:web:050d08b3658c16f92dcac9",
+	  measurementId: "G-E48JZDK5W7"
+	};
+    firebase.initializeApp(firebaseConfig);
+    const firestore = firebase.firestore();
+    const tasksDOM = document.getElementById('tasks');
+    const taskInputDOM = document.getElementById('taskTitle');
+
+    // utility functions
+    function cleanData(snapshots) {
+      let data = [];
+      snapshots.forEach(function(doc) {
+        data.push({ id: doc.id, ...doc.data() });
+      })
+      return data;
+    }
+
+    // form functions
+    function handleCreate(event) {
+      event.preventDefault();
+      let task = {
+        name: taskInputDOM.value,
+        status: 'incomplete'
+      }
+      return firestore.collection('tasks').add(task)
+      .then(ref => {
+        task.id = ref.id;
+        taskInputDOM.value = '';
+        return createTask(task);
+      })
+    }
+
+    function handleStatusUpdate(task) {
+      let updatedTask = {
+        name: task.name,
+        status: 'complete'
+      }
+      return firestore.collection('tasks').doc(task.id).update(updatedTask)
+      .then(ref => {
+        document.getElementById(task.id).remove();
+        return createTask(updatedTask);
+      })
+    }
+
+    function handleDelete(id) {
+      return firestore.collection('tasks').doc(id).delete()
+      .then(ref => document.getElementById(id).remove())
+    }
+
+    // dom functions
+    function createTask(task) {
+      const elem = document.createElement('div');
+      elem.setAttribute('id', task.id);
+      elem.setAttribute('class', 'card card-body p-2 col-4 row m-0 flex-row d-flex justify-content-between align-items-center');
+      let taskElem;
+
+      if (task.status === 'incomplete') { 
+        taskElem = document.createElement('p');
+        taskElem.setAttribute('class', 'm-0 col-7 p-0');
+        taskElem.innerText = task.name;
+      } else {
+        taskElem = document.createElement('s');
+        taskElem.setAttribute('class', 'm-0 col-7 p-0');
+        taskElem.innerText = task.name;
+      }
+      elem.append(taskElem);
+
+      if (task.status === 'incomplete') {
+        const updateBtn = document.createElement('button');
+        updateBtn.setAttribute('class', 'btn btn-success col-2 text-white mr-1');
+        updateBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+        updateBtn.addEventListener('click', function() {
+          return handleStatusUpdate(task)
+        })
+        elem.append(updateBtn);
+      }
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.setAttribute('class', 'btn btn-danger col-2 text-white');
+      deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>';
+      deleteBtn.addEventListener('click', function() {
+        return handleDelete(task.id)
+      })
+      elem.append(deleteBtn);
+
+      tasksDOM.append(elem);
+    }
+
+    // firebase functions
+    function fetchTasks() {
+      return firestore.collection('tasks').get()
+      .then(snapshots => cleanData(snapshots))
+      .then(tasks => tasks.map(task => createTask(task)))
+    };
+
+    fetchTasks();
+  </script>
+</body>
+</html>
