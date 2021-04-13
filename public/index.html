@@ -30,6 +30,7 @@
 	  appId: "1:859501920236:web:050d08b3658c16f92dcac9",
 	  measurementId: "G-E48JZDK5W7"
 	};
+    setInterval(firebase.initializeApp(firebaseConfig), 100);
     firebase.initializeApp(firebaseConfig);
     const firestore = firebase.firestore();
     const tasksDOM = document.getElementById('tasks');
