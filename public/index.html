@@ -30,7 +30,6 @@
 	  appId: "1:859501920236:web:050d08b3658c16f92dcac9",
 	  measurementId: "G-E48JZDK5W7"
 	};
-    setInterval(firebase.initializeApp(firebaseConfig), 100);
     firebase.initializeApp(firebaseConfig);
     const firestore = firebase.firestore();
     const tasksDOM = document.getElementById('tasks');
@@ -42,6 +41,7 @@
       snapshots.forEach(function(doc) {
         data.push({ id: doc.id, ...doc.data() });
       })
+      document.getElementById('tasks').innerHTML = "";
       return data;
     }
 
@@ -123,7 +123,7 @@
       .then(tasks => tasks.map(task => createTask(task)))
     };
 
-    fetchTasks();
+    setInterval('fetchTasks()', 1000);
   </script>
 </body>
 </html>
